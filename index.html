@@ -33,7 +33,7 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
+            <div class="loading">మీ బ్లాగర్ నుండి వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
         </div>
 
         <div class="footer-nav">
@@ -42,7 +42,6 @@
     </div>
 
     <script>
-        // మీ బ్లాగ్ లింక్ ఇక్కడ పర్ఫెక్ట్ గా సెట్ చేయబడింది
         const bloggerURL = 'https://nijamnippu.blogspot.com/feeds/posts/default?alt=json';
 
         async function fetchBloggerNews() {
@@ -60,7 +59,6 @@
                         const title = entry.title.$t;
                         let htmlContent = entry.content ? entry.content.$t : "";
                         
-                        // ఇమేజ్ ఆటోమేటిక్‌గా ఎక్స్‌ట్రాక్ట్ చేయడం
                         let imageUrl = "https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80";
                         if (entry.media$thumbnail && entry.media$thumbnail.url) {
                             imageUrl = entry.media$thumbnail.url.replace(/\/s[0-9]+(\-c)?\//, '/s800/');
@@ -69,10 +67,8 @@
                             if (imgMatch) imageUrl = imgMatch[1];
                         }
 
-                        // టెక్స్ట్ నీట్‌గా క్లీన్ చేయడం
                         let cleanDesc = htmlContent.replace(/<[^>]*>?/gm, '').trim();
 
-                        // బ్లాగర్ లేబుల్ ని కేటగిరీగా వాడటం
                         let category = "ముఖ్య వార్త";
                         if (entry.category && entry.category.length > 0) {
                             category = entry.category[0].term;
@@ -96,7 +92,7 @@
                     let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
                     document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
                 } else {
-                    container.innerHTML = '<div class="loading">ప్రస్తుతం మీ బ్లాగ్‌లో వార్తలు లేవు. ఒక పోస్ట్ రాయండి!</div>';
+                    container.innerHTML = '<div class="loading">మీ బ్లాగ్‌లో ఇంకా పోస్ట్ లు లేవు. దయచేసి Nijam Nippu బ్లాగ్‌లో ఒక కొత్త పోస్ట్ రాయండి!</div>';
                 }
             } catch (error) {
                 container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది.</div>';
@@ -105,7 +101,7 @@
 
         window.onload = () => {
             fetchBloggerNews();
-            setInterval(fetchBloggerNews, 180000); // ప్రతి 3 నిమిషాలకు ఆటో-సింక్ అవుతుంది
+            setInterval(fetchBloggerNews, 180000);
         };
     </script>
 </body>
