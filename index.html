@@ -44,15 +44,28 @@
     <script>
         async function fetchLiveNews() {
             const container = document.getElementById('newsContainer');
+            const rssUrl = 'https://telugu.oneindia.com/rss/telugu-news-fb.xml';
             
             try {
-                // 100% Free RSS Feed (OneIndia Telugu) + Free AllOrigins Proxy
-                const rssUrl = 'https://telugu.oneindia.com/rss/telugu-news-fb.xml';
-                const apiQuery = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
+                let xmlText = '';
                 
-                const response = await fetch(apiQuery);
-                const xmlText = await response.text();
-                
+                // సర్వర్ 1: AllOrigins (ఇది ఫెయిల్ అయితే వెంటనే రెండో దానికి వెళ్తుంది)
+                try {
+                    const res1 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`);
+                    const data1 = await res1.json();
+                    if (data1.contents) {
+                        xmlText = data1.contents;
+                    } else {
+                        throw new Error("Server 1 Empty");
+                    }
+                } catch (err1) {
+                    // సర్వర్ 2: CodeTabs (ఫాల్‌బ్యాక్ ప్రాక్సీ - ఎప్పటికీ ఎర్రర్ రాకుండా కాపాడుతుంది)
+                    const res2 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rssUrl)}`);
+                    xmlText = await res2.text();
+                }
+
+                if (!xmlText) throw new Error("వార్తలు లోడ్ కాలేదు");
+
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
                 const items = xmlDoc.querySelectorAll("item");
@@ -61,10 +74,10 @@
                     container.innerHTML = ''; 
 
                     items.forEach((item, index) => {
-                        const title = item.querySelector("title") ? item.querySelector("title").textContent : "శీర్షిక లేదు";
+                        const title = item.querySelector("title") ? item.querySelector("title").textContent : "";
                         let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
                         
-                        // ఇమేజ్ ఎక్స్‌ట్రాక్షన్
+                        // ఖచ్చితమైన ఇమేజ్ లాగడం
                         let imageUrl = "";
                         const enclosure = item.querySelector("enclosure");
                         if (enclosure) imageUrl = enclosure.getAttribute("url");
@@ -74,25 +87,26 @@
                             if (imgMatch) imageUrl = imgMatch[1];
                         }
                         
+                        // బ్యాకప్ ఇమేజ్
                         if (!imageUrl) {
                             imageUrl = `https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80`;
                         }
 
-                        // Way2News లాగా కేవలం టెక్స్ట్ మాత్రమే ఉండేలా క్లీన్ చేయడం
+                        // HTML కోడ్ లేకుండా కేవలం అక్షరాలు మాత్రమే ఉండేలా క్లీన్ చేయడం
                         let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
                         
-                        // చదవడానికి అనువుగా వార్త సారాంశం (500 అక్షరాలు)
+                        // పర్ఫెక్ట్ న్యూస్ సైజ్ (Way2News స్టైల్ కోసం 500 అక్షరాలు)
                         if(cleanDesc.length > 500) {
                             cleanDesc = cleanDesc.substring(0, 500) + '...';
                         }
 
-                        // కంటెంట్ లేని వార్తలను స్కిప్ చేయడం
+                        // చిన్న లైన్స్ ఉన్న వాటిని స్కిప్ చేయడం
                         if(cleanDesc.length < 50) return;
 
                         const card = document.createElement('div');
                         card.className = 'news-card';
                         
-                        // 'పూర్తి వార్త చదవండి' బటన్ తీసేశాను, డైరెక్ట్ వార్త మాత్రమే ఉంటుంది
+                        // ఎటువంటి బటన్ లేకుండా నేరుగా వార్త
                         card.innerHTML = `
                             <div class="news-content-box">
                                 <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80'">
@@ -112,7 +126,7 @@
                     throw new Error("వార్తలు రాలేదు");
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది. దయచేసి రిఫ్రెష్ చేయండి.</div>';
+                container.innerHTML = '<div class="loading">నెట్‌వర్క్ స్లోగా ఉంది. దయచేసి పేజీ రిఫ్రెష్ చేయండి.</div>';
             }
         }
 
