@@ -21,7 +21,6 @@
         .news-title { font-size: 20px; font-weight: bold; color: #ffffff; margin-bottom: 15px; line-height: 1.4; }
         .news-description { font-size: 16px; color: #cccccc; line-height: 1.6; text-align: justify; }
         .footer-nav { padding: 10px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
-        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #888; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
@@ -33,109 +32,60 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">లైవ్ వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
+            <!-- వార్తలు ఇక్కడ వస్తాయి -->
         </div>
 
         <div class="footer-nav">
-            పైకి/కిందకి స్వైప్ చేయండి • ప్రతి 10 నిమిషాలకు ఆటో-అప్‌డేట్
+            పైకి/కిందకి స్వైప్ చేయండి
         </div>
     </div>
 
     <script>
-        async function fetchLiveNews() {
-            const container = document.getElementById('newsContainer');
-            const rssUrl = 'https://telugu.oneindia.com/rss/telugu-news-fb.xml';
-            
-            try {
-                let xmlText = '';
-                
-                // సర్వర్ 1: AllOrigins (ఇది ఫెయిల్ అయితే వెంటనే రెండో దానికి వెళ్తుంది)
-                try {
-                    const res1 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`);
-                    const data1 = await res1.json();
-                    if (data1.contents) {
-                        xmlText = data1.contents;
-                    } else {
-                        throw new Error("Server 1 Empty");
-                    }
-                } catch (err1) {
-                    // సర్వర్ 2: CodeTabs (ఫాల్‌బ్యాక్ ప్రాక్సీ - ఎప్పటికీ ఎర్రర్ రాకుండా కాపాడుతుంది)
-                    const res2 = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rssUrl)}`);
-                    xmlText = await res2.text();
-                }
-
-                if (!xmlText) throw new Error("వార్తలు లోడ్ కాలేదు");
-
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                const items = xmlDoc.querySelectorAll("item");
-
-                if(items.length > 0) {
-                    container.innerHTML = ''; 
-
-                    items.forEach((item, index) => {
-                        const title = item.querySelector("title") ? item.querySelector("title").textContent : "";
-                        let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
-                        
-                        // ఖచ్చితమైన ఇమేజ్ లాగడం
-                        let imageUrl = "";
-                        const enclosure = item.querySelector("enclosure");
-                        if (enclosure) imageUrl = enclosure.getAttribute("url");
-
-                        if (!imageUrl && description.includes("<img")) {
-                            const imgMatch = description.match(/src="([^">]+)"/);
-                            if (imgMatch) imageUrl = imgMatch[1];
-                        }
-                        
-                        // బ్యాకప్ ఇమేజ్
-                        if (!imageUrl) {
-                            imageUrl = `https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80`;
-                        }
-
-                        // HTML కోడ్ లేకుండా కేవలం అక్షరాలు మాత్రమే ఉండేలా క్లీన్ చేయడం
-                        let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
-                        
-                        // పర్ఫెక్ట్ న్యూస్ సైజ్ (Way2News స్టైల్ కోసం 500 అక్షరాలు)
-                        if(cleanDesc.length > 500) {
-                            cleanDesc = cleanDesc.substring(0, 500) + '...';
-                        }
-
-                        // చిన్న లైన్స్ ఉన్న వాటిని స్కిప్ చేయడం
-                        if(cleanDesc.length < 50) return;
-
-                        const card = document.createElement('div');
-                        card.className = 'news-card';
-                        
-                        // ఎటువంటి బటన్ లేకుండా నేరుగా వార్త
-                        card.innerHTML = `
-                            <div class="news-content-box">
-                                <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80'">
-                                <span class="news-category">ముఖ్య వార్త</span>
-                                <h2 class="news-title">${title}</h2>
-                                <p class="news-description">${cleanDesc}</p>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    });
-
-                    // టైమ్ అప్‌డేట్
-                    let now = new Date();
-                    let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
-                    document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
-                } else {
-                    throw new Error("వార్తలు రాలేదు");
-                }
-            } catch (error) {
-                container.innerHTML = '<div class="loading">నెట్‌వర్క్ స్లోగా ఉంది. దయచేసి పేజీ రిఫ్రెష్ చేయండి.</div>';
+        // 1. ఇక్కడ మీరు వార్తలను మాన్యువల్ గా సొంతంగా రాసుకోవచ్చు
+        const myNewsData = [
+            {
+                category: "రాజకీయం",
+                title: "మీ మొదటి వార్త హెడ్డింగ్ ఇక్కడ రాయండి",
+                description: "ఇది మీ వార్త యొక్క పూర్తి వివరాలు. Way2News లాగా ఇక్కడ మీరు ఎంత పెద్ద మేటర్ అయినా రాసుకోవచ్చు. నెట్‌వర్క్ ఎర్రర్స్ రావు, లోడింగ్ ప్రాబ్లమ్ అస్సలు ఉండదు. అంతా మీ చేతుల్లోనే ఉంటుంది.",
+                image: "https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80"
+            },
+            {
+                category: "సినిమా",
+                title: "టాలీవుడ్ లో కొత్త సినిమాల సందడి",
+                description: "ఇక్కడ మీరు సినిమా వార్తలు రాసుకోవచ్చు. పైన ఉన్న ఇమేజ్ లింక్ ని మార్చితే, మీకు కావాల్సిన ఫోటో ఇక్కడ డిస్ప్లే అవుతుంది. ఎన్ని వార్తలు కావాలంటే అన్ని కింద యాడ్ చేసుకుంటూ వెళ్లొచ్చు.",
+                image: "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=400&q=80"
+            },
+            {
+                category: "టెక్నాలజీ",
+                title: "సరికొత్త ఫీచర్లతో వచ్చిన మొబైల్",
+                description: "ఈ విధంగా మీరు మీకు నచ్చిన కేటగిరీ పెట్టుకుని, మీ సొంత వార్తలను ప్రజలకు అందించవచ్చు. ఇది GitHub లో పెడితే సెకనులో ఫాస్ట్ గా ఓపెన్ అవుతుంది.",
+                image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80"
             }
+        ];
+
+        // 2. మీ వార్తలను యాప్ లో చూపించే ఫంక్షన్
+        function loadManualNews() {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = ''; 
+
+            myNewsData.forEach((news) => {
+                const card = document.createElement('div');
+                card.className = 'news-card';
+                
+                card.innerHTML = `
+                    <div class="news-content-box">
+                        <img src="${news.image}" class="news-image" alt="Thumbnail">
+                        <span class="news-category">${news.category}</span>
+                        <h2 class="news-title">${news.title}</h2>
+                        <p class="news-description">${news.description}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
-        // యాప్ ఓపెన్ అవ్వగానే లోడ్ అవుతుంది
-        window.onload = () => {
-            fetchLiveNews();
-            // ప్రతి 10 నిమిషాలకు ఫ్రీగా ఆటోమేటిక్ అప్డేట్ అవుతుంది
-            setInterval(fetchLiveNews, 600000); 
-        };
+        // యాప్ ఓపెన్ అవ్వగానే మీ వార్తలు ఫాస్ట్ గా లోడ్ అవుతాయి
+        window.onload = loadManualNews;
     </script>
 </body>
 </html>
