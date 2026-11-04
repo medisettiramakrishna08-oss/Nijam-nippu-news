@@ -2,7 +2,7 @@
 <html lang="te">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nijam Nippu - Telugu News App</title>
     
     <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
@@ -14,7 +14,7 @@
       %22theme_color%22: %22%23d32f2f%22,
       %22icons%22: [
         {
-          %22src%22: %22https://via.placeholder.com/512%22,
+          %22src%22: %22YOUR_LOGO_IMAGE_URL%22,
           %22sizes%22: %22512x512%22,
           %22type%22: %22image/png%22
         }
@@ -23,39 +23,51 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        html, body { width: 100%; height: 100%; background-color: #121212; color: #e0e0e0; overflow: hidden; position: fixed; }
         
-        /* Splash Screen Styles (App Open Logo View) */
-        #splashScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #d32f2f; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease; }
-        .splash-logo { width: 90px; height: 90px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; font-weight: bold; color: #d32f2f; box-shadow: 0 5px 20px rgba(0,0,0,0.3); margin-bottom: 20px; animation: pulse 1.2s infinite; }
-        .splash-title { color: white; font-size: 24px; font-weight: bold; letter-spacing: 1px; }
+        /* Splash Screen */
+        #splashScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0f19; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease; }
+        .splash-logo { width: 110px; height: 110px; border-radius: 25px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.7); margin-bottom: 20px; border: 2px solid #d4af37; animation: pulse 1.2s infinite; }
+        .splash-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .splash-title { color: #ffffff; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
         @keyframes pulse { 0% { transform: scale(0.95); } 50% { transform: scale(1.05); } 100% { transform: scale(0.95); } }
 
-        .app-container { width: 100%; max-width: 420px; height: 100%; max-height: 850px; background-color: #1e1e1e; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        header { background-color: #d32f2f; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; }
-        header span { font-size: 12px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 10px; }
-        .news-viewport { flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+        /* Full Mobile Screen Container */
+        .app-container { width: 100vw; height: 100vh; background-color: #1e1e1e; display: flex; flex-direction: column; overflow: hidden; position: absolute; top: 0; left: 0; }
+        
+        header { background-color: #d32f2f; color: white; padding: 14px 16px; text-align: center; font-size: 18px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        header span { font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 10px; }
+        
+        .news-viewport { flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; }
         .news-viewport::-webkit-scrollbar { display: none; }
-        .news-card { height: 100%; scroll-snap-align: start; display: flex; flex-direction: column; background-color: #1e1e1e; position: relative; padding: 20px; justify-content: flex-start; }
-        .news-image { width: 100%; height: 210px; object-fit: cover; border-radius: 12px; margin-bottom: 12px; background-color: #2c2c2c; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .news-content-box { overflow-y: auto; flex: 1; padding-right: 5px; display: flex; flex-direction: column; }
-        .news-content-box::-webkit-scrollbar { width: 4px; }
-        .news-content-box::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        .news-category { align-self: flex-start; background-color: #d32f2f; color: white; padding: 4px 10px; font-size: 11px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; }
-        .news-title { font-size: 18px; font-weight: bold; color: #ffffff; margin-bottom: 10px; line-height: 1.3; }
-        .news-description { font-size: 15px; color: #cccccc; line-height: 1.5; text-align: justify; }
-        .footer-nav { padding: 10px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
-        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 16px; color: #aaa; text-align: center; padding: 25px; line-height: 1.5; }
+        
+        .news-card { width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; display: flex; flex-direction: column; background-color: #1e1e1e; position: relative; padding: 16px; justify-content: flex-start; }
+        
+        .news-image { width: 100%; height: 230px; object-fit: cover; border-radius: 12px; margin-bottom: 12px; background-color: #2c2c2c; box-shadow: 0 4px 10px rgba(0,0,0,0.5); flex-shrink: 0; }
+        
+        .news-content-box { overflow-y: auto; flex: 1; padding-right: 2px; display: flex; flex-direction: column; }
+        .news-content-box::-webkit-scrollbar { width: 3px; }
+        .news-content-box::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        
+        .news-category { align-self: flex-start; background-color: #d32f2f; color: white; padding: 3px 8px; font-size: 11px; border-radius: 4px; margin-bottom: 8px; font-weight: bold; }
+        .news-title { font-size: 17px; font-weight: bold; color: #ffffff; margin-bottom: 8px; line-height: 1.35; }
+        .news-description { font-size: 14.5px; color: #cccccc; line-height: 1.5; text-align: justify; padding-bottom: 15px; }
+        
+        .footer-nav { padding: 8px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; flex-shrink: 0; }
+        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #aaa; text-align: center; padding: 25px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
-    <!-- App Opening Splash Screen (Logo View) -->
+    <!-- Splash Screen -->
     <div id="splashScreen">
-        <div class="splash-logo">ని</div>
-        <div class="splash-title">నిజం నిప్పు</div>
+        <div class="splash-logo">
+            <img src="YOUR_LOGO_IMAGE_URL" alt="Logo">
+        </div>
+        <div class="splash-title">నిజం నిప్పు న్యూస్</div>
     </div>
 
+    <!-- App Screen -->
     <div class="app-container">
         <header>
             నిజం నిప్పు 
@@ -72,13 +84,12 @@
     </div>
 
     <script>
-        // Splash Screen ni 2 seconds taruvatha automatic ga hide chese code
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splashScreen');
                 splash.style.opacity = '0';
                 setTimeout(() => splash.style.display = 'none', 500);
-            }, 1500);
+            }, 1800);
         });
 
         function handleBloggerData(data) {
