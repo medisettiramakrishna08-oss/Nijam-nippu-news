@@ -12,16 +12,15 @@
         header span { font-size: 12px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 10px; }
         .news-viewport { flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .news-viewport::-webkit-scrollbar { display: none; }
-        .news-card { height: 100%; scroll-snap-align: start; display: flex; flex-direction: column; background-color: #1e1e1e; position: relative; padding: 20px; justify-content: space-between; }
+        .news-card { height: 100%; scroll-snap-align: start; display: flex; flex-direction: column; background-color: #1e1e1e; position: relative; padding: 20px; justify-content: flex-start; }
         .news-image { width: 100%; height: 220px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; background-color: #2c2c2c; }
-        .news-content-box { overflow-y: auto; flex: 1; padding-right: 5px; }
+        .news-content-box { overflow-y: auto; flex: 1; padding-right: 5px; display: flex; flex-direction: column; }
         .news-content-box::-webkit-scrollbar { width: 4px; }
         .news-content-box::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        .news-category { display: inline-block; background-color: #d32f2f; color: white; padding: 3px 8px; font-size: 11px; border-radius: 4px; margin-bottom: 8px; }
-        .news-title { font-size: 18px; font-weight: bold; color: #ffffff; margin-bottom: 10px; line-height: 1.3; }
-        .news-description { font-size: 14px; color: #b0b0b0; line-height: 1.5; margin-bottom: 10px; }
-        .read-more-btn { display: block; text-align: center; background-color: #d32f2f; color: white; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3); }
-        .footer-nav { padding: 8px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
+        .news-category { align-self: flex-start; background-color: #d32f2f; color: white; padding: 3px 8px; font-size: 11px; border-radius: 4px; margin-bottom: 12px; }
+        .news-title { font-size: 19px; font-weight: bold; color: #ffffff; margin-bottom: 12px; line-height: 1.4; }
+        .news-description { font-size: 15px; color: #b0b0b0; line-height: 1.6; text-align: justify; }
+        .footer-nav { padding: 10px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
         .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #888; text-align: center; padding: 20px; }
     </style>
 </head>
@@ -34,7 +33,7 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">ఫాస్ట్ వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
+            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
         </div>
 
         <div class="footer-nav">
@@ -47,8 +46,8 @@
             const container = document.getElementById('newsContainer');
             
             try {
-                // rss2json API ని పూర్తిగా తొలగించి డైరెక్ట్ గా ABP Desam Telugu ఫీడ్ వాడుతున్నాం 
-                const rssUrl = 'https://telugu.abplive.com/home/feed';
+                // OneIndia Telugu feed gives detailed descriptions and perfect images
+                const rssUrl = 'https://telugu.oneindia.com/rss/telugu-news-fb.xml';
                 const apiQuery = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
                 
                 const response = await fetch(apiQuery);
@@ -63,58 +62,63 @@
                         container.innerHTML = ''; 
 
                         items.forEach((item, index) => {
-                            const title = item.querySelector("title") ? item.querySelector("title").textContent : "శీర్షిక లేదు";
-                            const link = item.querySelector("link") ? item.querySelector("link").textContent : "#";
+                            const title = item.querySelector("title") ? item.querySelector("title").textContent : "";
                             let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
                             
-                            // ఒరిజినల్ ఇమేజ్ ఎక్స్‌ట్రాక్ట్ చేయడం
+                            // Image extract cheyadam
                             let imageUrl = "";
                             const enclosure = item.querySelector("enclosure");
                             if (enclosure) imageUrl = enclosure.getAttribute("url");
 
-                            if (!imageUrl) {
+                            // Description lo unna image ni extract cheyadam
+                            if (!imageUrl && description.includes("<img")) {
                                 const imgMatch = description.match(/src="([^">]+)"/);
                                 if (imgMatch) imageUrl = imgMatch[1];
                             }
+                            
+                            // Em photo lekapothe default news image
                             if (!imageUrl) {
-                                imageUrl = `https://picsum.photos/400/250?random=${index}`;
+                                imageUrl = `https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80`;
                             }
 
-                            // టెక్స్ట్ క్లీన్ చేయడం
+                            // Description ni clean chesi peddaga chupinchadam (way2news laga)
                             let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
-                            if(cleanDesc.length > 150) cleanDesc = cleanDesc.substring(0, 150) + '...';
+                            
+                            // Chala chinnaga unna descriptions ni ignore cheyadam
+                            if(cleanDesc.length < 30) return;
+
+                            // Description limit cheyadam (Way2News format)
+                            if(cleanDesc.length > 500) cleanDesc = cleanDesc.substring(0, 500) + '...';
 
                             const card = document.createElement('div');
                             card.className = 'news-card';
+                            // Button theesesanu, direct ga description untundi
                             card.innerHTML = `
                                 <div class="news-content-box">
-                                    <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://picsum.photos/400/250?random=${index}'">
-                                    <span class="news-category">తాజా అప్‌డేట్</span>
+                                    <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80'">
+                                    <span class="news-category">తాజా వార్త</span>
                                     <h2 class="news-title">${title}</h2>
                                     <p class="news-description">${cleanDesc}</p>
                                 </div>
-                                <a href="${link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
                             `;
                             container.appendChild(card);
                         });
 
-                        // టైమ్ అప్‌డేట్
+                        // Time update
                         let now = new Date();
                         let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
                         document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
                     }
-                } else {
-                    throw new Error("డేటా రాలేదు");
                 }
             } catch (error) {
                 container.innerHTML = '<div class="loading">నెట్‌వర్క్ ప్రాబ్లం. పేజీని రిఫ్రెష్ చేయండి.</div>';
             }
         }
 
-        // పేజీ ఓపెన్ అవ్వగానే లోడ్ అవుతుంది
+        // Page load avvagane news vastundi
         window.onload = () => {
             fetchLiveNews();
-            setInterval(fetchLiveNews, 600000); // 10 నిమిషాలకు ఒకసారి
+            setInterval(fetchLiveNews, 600000);
         };
     </script>
 </body>
