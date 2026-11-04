@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telugu News - Fast Live</title>
+    <title>Telugu News Swipe App</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
@@ -34,7 +34,7 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">సూపర్ ఫాస్ట్ వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
+            <div class="loading">ఫాస్ట్ వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
         </div>
 
         <div class="footer-nav">
@@ -47,66 +47,74 @@
             const container = document.getElementById('newsContainer');
             
             try {
-                // Google News Telugu - Extremely Fast & Never Blocks
-                const rssUrl = 'https://news.google.com/rss?hl=te&gl=IN&ceid=IN:te';
-                const apiQuery = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+                // rss2json API ని పూర్తిగా తొలగించి డైరెక్ట్ గా ABP Desam Telugu ఫీడ్ వాడుతున్నాం 
+                const rssUrl = 'https://telugu.abplive.com/home/feed';
+                const apiQuery = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
                 
                 const response = await fetch(apiQuery);
                 const data = await response.json();
 
-                if (data.status === 'ok' && data.items.length > 0) {
-                    container.innerHTML = ''; 
+                if (data.contents) {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                    const items = xmlDoc.querySelectorAll("item");
 
-                    data.items.forEach((item, index) => {
-                        // గూగుల్ న్యూస్ లోపల దాగి ఉన్న ఒరిజినల్ థంబ్‌నైల్ ఫోటోను బయటకు తీయడం
-                        let imageUrl = '';
-                        const imgMatch = item.description.match(/<img[^>]+src="([^">]+)"/);
-                        if (imgMatch && imgMatch[1]) {
-                            imageUrl = imgMatch[1];
-                        } else {
-                            imageUrl = `https://picsum.photos/400/250?random=${index}`;
-                        }
+                    if(items.length > 0) {
+                        container.innerHTML = ''; 
 
-                        // టెక్స్ట్ లోపల ఉన్న అనవసరమైన కోడ్ ని క్లీన్ చేయడం
-                        let cleanDesc = item.description.replace(/<[^>]*>?/gm, '').trim();
-                        if(cleanDesc.length > 150) cleanDesc = cleanDesc.substring(0, 150) + '...';
+                        items.forEach((item, index) => {
+                            const title = item.querySelector("title") ? item.querySelector("title").textContent : "శీర్షిక లేదు";
+                            const link = item.querySelector("link") ? item.querySelector("link").textContent : "#";
+                            let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
+                            
+                            // ఒరిజినల్ ఇమేజ్ ఎక్స్‌ట్రాక్ట్ చేయడం
+                            let imageUrl = "";
+                            const enclosure = item.querySelector("enclosure");
+                            if (enclosure) imageUrl = enclosure.getAttribute("url");
 
-                        // న్యూస్ ఎక్కడ నుండి వచ్చిందో (Eenadu, Sakshi etc..) చూపించడానికి
-                        let sourceName = item.title.split(' - ').pop();
-                        let cleanTitle = item.title.replace(' - ' + sourceName, '');
+                            if (!imageUrl) {
+                                const imgMatch = description.match(/src="([^">]+)"/);
+                                if (imgMatch) imageUrl = imgMatch[1];
+                            }
+                            if (!imageUrl) {
+                                imageUrl = `https://picsum.photos/400/250?random=${index}`;
+                            }
 
-                        const card = document.createElement('div');
-                        card.className = 'news-card';
-                        card.innerHTML = `
-                            <div class="news-content-box">
-                                <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://picsum.photos/400/250?random=${index}'">
-                                <span class="news-category">${sourceName || 'తాజా వార్త'}</span>
-                                <h2 class="news-title">${cleanTitle}</h2>
-                                <p class="news-description">${cleanDesc}</p>
-                            </div>
-                            <a href="${item.link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
-                        `;
-                        container.appendChild(card);
-                    });
+                            // టెక్స్ట్ క్లీన్ చేయడం
+                            let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
+                            if(cleanDesc.length > 150) cleanDesc = cleanDesc.substring(0, 150) + '...';
 
-                    // టైమ్ అప్‌డేట్
-                    let now = new Date();
-                    let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
-                    document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
+                            const card = document.createElement('div');
+                            card.className = 'news-card';
+                            card.innerHTML = `
+                                <div class="news-content-box">
+                                    <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://picsum.photos/400/250?random=${index}'">
+                                    <span class="news-category">తాజా అప్‌డేట్</span>
+                                    <h2 class="news-title">${title}</h2>
+                                    <p class="news-description">${cleanDesc}</p>
+                                </div>
+                                <a href="${link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
+                            `;
+                            container.appendChild(card);
+                        });
+
+                        // టైమ్ అప్‌డేట్
+                        let now = new Date();
+                        let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
+                        document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
+                    }
                 } else {
-                    throw new Error("వార్తలు లోడ్ అవ్వలేదు");
+                    throw new Error("డేటా రాలేదు");
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">కనెక్షన్ ఎర్రర్. దయచేసి రిఫ్రెష్ చేయండి.</div>';
+                container.innerHTML = '<div class="loading">నెట్‌వర్క్ ప్రాబ్లం. పేజీని రిఫ్రెష్ చేయండి.</div>';
             }
         }
 
-        // యాప్ ఓపెన్ అవ్వగానే ఫాస్ట్ గా లోడ్ అవుతుంది
+        // పేజీ ఓపెన్ అవ్వగానే లోడ్ అవుతుంది
         window.onload = () => {
             fetchLiveNews();
-            
-            // ప్రతి 10 నిమిషాలకు ఆటో-అప్‌డేట్ (600000 మిల్లీసెకన్లు)
-            setInterval(fetchLiveNews, 600000);
+            setInterval(fetchLiveNews, 600000); // 10 నిమిషాలకు ఒకసారి
         };
     </script>
 </body>
