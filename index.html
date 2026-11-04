@@ -21,7 +21,7 @@
         .news-title { font-size: 20px; font-weight: bold; color: #ffffff; margin-bottom: 15px; line-height: 1.4; }
         .news-description { font-size: 16px; color: #cccccc; line-height: 1.6; text-align: justify; }
         .footer-nav { padding: 10px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
-        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #888; text-align: center; padding: 20px; }
+        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 16px; color: #aaa; text-align: center; padding: 25px; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -41,7 +41,6 @@
         </div>
     </div>
 
-    <!-- Blogger నుండి జావాస్క్రిప్ట్ ద్వారా కాకుండా నేరుగా JSON ఫీడ్‌ని లోడ్ చేసే పద్ధతి -->
     <script>
         function handleBloggerData(data) {
             const container = document.getElementById('newsContainer');
@@ -87,12 +86,20 @@
                     let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
                     document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
                 } else {
-                    container.innerHTML = '<div class="loading">మీ బ్లాగ్‌లో ఇంకా పోస్ట్ లు లేవు. Nijam Nippu బ్లాగ్‌లో ఒక పోస్ట్ రాయండి!</div>';
+                    container.innerHTML = '<div class="loading">మీ బ్లాగ్‌లో ఇంకా పోస్ట్‌లు లేవు.<br><br>దయచేసి మీ <b>nijamnippu.blogspot.com</b> లోకి వెళ్లి ఒక టెస్ట్ పోస్ట్ (ఫోటో, టైటిల్ పెట్టి) Publish చేయండి!</div>';
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది.</div>';
+                container.innerHTML = '<div class="loading">డేటా ప్రాసెసింగ్ లో చిన్న సమస్య ఎదురైంది.</div>';
             }
         }
+
+        // ఒకవేళ బ్లాగ్ లింక్ లోడ్ అవ్వడం లేట్ అయితే లేదా ఫెయిల్ అయితే హ్యాండ్ చేయడానికి
+        setTimeout(() => {
+            const container = document.getElementById('newsContainer');
+            if (container.querySelector('.loading') && container.querySelector('.loading').innerText.includes("లోడ్ అవుతున్నాయి")) {
+                container.innerHTML = '<div class="loading">బ్లాగర్ నుండి కనెక్షన్ రాలేదు.<br><br>దయచేసి మీ బ్లాగ్ పబ్లిక్ లో ఉందో లేదో చెక్ చేయండి లేదా కొత్త పోస్ట్ Publish చేయండి.</div>';
+            }
+        }, 7000);
     </script>
     <script src="https://nijamnippu.blogspot.com/feeds/posts/default?alt=json-in-script&callback=handleBloggerData"></script>
 </body>
