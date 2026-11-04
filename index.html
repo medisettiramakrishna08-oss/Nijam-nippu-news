@@ -157,6 +157,8 @@
             height: 100%;
             font-size: 15px;
             color: #888;
+            text-align: center;
+            padding: 20px;
         }
     </style>
 </head>
@@ -169,7 +171,7 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి...</div>
+            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి... <br><br> దయచేసి వేచి ఉండండి.</div>
         </div>
 
         <div class="footer-nav">
@@ -179,24 +181,53 @@
 
     <script>
         async function fetchLiveNews() {
+            const container = document.getElementById('newsContainer');
+            
             try {
-                // Real Telugu News RSS Feed (News18 Telugu Top News) for exact images and fast loading
+                // Using reliable proxy and ABP Desam / News18 Telugu feeds
                 const rssUrl = 'https://telugu.news18.com/rss/top-news.xml';
-                const apiQuery = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+                const apiQuery = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
                 
                 const response = await fetch(apiQuery);
-                const data = await response.json();
+                if (!response.ok) throw new Error('Network request failed');
+                
+                const strData = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(strData, "text/xml");
+                const items = xmlDoc.querySelectorAll("item");
 
-                if (data.status === 'ok' && data.items.length > 0) {
-                    const container = document.getElementById('newsContainer');
-                    container.innerHTML = ''; // Loading text ni theesestundi
+                if (items.length > 0) {
+                    container.innerHTML = ''; // Clear loading text
 
-                    data.items.forEach((item, index) => {
-                        // Extracting Exact Thumbnail from the news
-                        let imageUrl = item.thumbnail || item.enclosure.link || "https://picsum.photos/400/250?random=" + index;
+                    items.forEach((item, index) => {
+                        const title = item.querySelector("title") ? item.querySelector("title").textContent : "శీర్షిక అందుబాటులో లేదు";
+                        let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
+                        const link = item.querySelector("link") ? item.querySelector("link").textContent : "#";
 
-                        // Cleaning HTML tags from description
-                        let cleanDesc = item.description.replace(/<[^>]*>?/gm, '');
+                        // Intelligent Image Extraction (Finds exact thumbnail from XML)
+                        let imageUrl = "";
+                        const enclosure = item.querySelector("enclosure");
+                        const mediaContent = item.getElementsByTagName("media:content")[0];
+                        
+                        if (enclosure && enclosure.getAttribute("url")) {
+                            imageUrl = enclosure.getAttribute("url");
+                        } else if (mediaContent && mediaContent.getAttribute("url")) {
+                            imageUrl = mediaContent.getAttribute("url");
+                        } else {
+                            // description లోపల ఇమేజ్ ఉంటే లాగడం
+                            const imgMatch = description.match(/<img[^>]+src="([^">]+)"/);
+                            if (imgMatch && imgMatch[1]) {
+                                imageUrl = imgMatch[1];
+                            }
+                        }
+
+                        // ఏ ఇమేజ్ దొరకకపోతే మాత్రమే డీఫాల్ట్ ఇమేజ్ వేయడం
+                        if(!imageUrl) {
+                            imageUrl = `https://picsum.photos/400/250?random=${index}`;
+                        }
+
+                        // టెక్స్ట్ లోని HTML ట్యాగ్స్ క్లీన్ చేయడం
+                        let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
                         if(cleanDesc.length > 180) cleanDesc = cleanDesc.substring(0, 180) + '...';
 
                         const card = document.createElement('div');
@@ -205,28 +236,32 @@
                             <div class="news-content-box">
                                 <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://picsum.photos/400/250?random=${index}'">
                                 <span class="news-category">తాజా వార్త #${index + 1}</span>
-                                <h2 class="news-title">${item.title}</h2>
+                                <h2 class="news-title">${title}</h2>
                                 <p class="news-description">${cleanDesc}</p>
                             </div>
-                            <a href="${item.link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
+                            <a href="${link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
                         `;
                         container.appendChild(card);
                     });
 
                     // Update time tag
                     let now = new Date();
-                    document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + (now.getMinutes()<10?'0':'') + now.getMinutes();
+                    let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
+                    document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
+                } else {
+                    container.innerHTML = '<div class="loading">ప్రస్తుతం వార్తలు దొరకలేదు. కాసేపటి తర్వాత మళ్లీ ట్రై చేయండి.</div>';
                 }
             } catch (error) {
-                console.log("Error fetching news");
+                container.innerHTML = '<div class="loading">నెట్‌వర్క్ కనెక్షన్ స్లోగా ఉంది లేదా లోడ్ అవ్వట్లేదు. దయచేసి పేజీ రిఫ్రెష్ చేయండి.</div>';
+                console.log(error);
             }
         }
 
-        // App open avvagane news fetch avtundi
+        // App open అవ్వగానే లోడ్ అవుతుంది
         window.onload = () => {
             fetchLiveNews();
             
-            // Prathi 10 minutes ki auto-update (10 mins = 600000 milliseconds)
+            // ప్రతి 10 నిమిషాలకు ఆటోమేటిక్ గా అప్డేట్ అవుతుంది (600000 ms)
             setInterval(fetchLiveNews, 600000);
         };
     </script>
