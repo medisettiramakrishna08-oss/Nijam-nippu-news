@@ -41,23 +41,12 @@
         </div>
     </div>
 
+    <!-- Blogger నుండి జావాస్క్రిప్ట్ ద్వారా కాకుండా నేరుగా JSON ఫీడ్‌ని లోడ్ చేసే పద్ధతి -->
     <script>
-        const bloggerURL = 'https://nijamnippu.blogspot.com/feeds/posts/default?alt=json';
-
-        async function fetchBloggerNews() {
+        function handleBloggerData(data) {
             const container = document.getElementById('newsContainer');
             
             try {
-                // CORS బైపాస్ కోసం ప్రాక్సీని ఉపయోగిస్తున్నాం
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(bloggerURL + '&timestamp=' + new Date().getTime())}`;
-                
-                const response = await fetch(proxyUrl);
-                const resData = await response.json();
-                
-                if (!resData.contents) throw new Error("Empty response");
-
-                const data = JSON.parse(resData.contents);
-
                 if (data.feed && data.feed.entry && data.feed.entry.length > 0) {
                     container.innerHTML = ''; 
 
@@ -98,18 +87,13 @@
                     let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
                     document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
                 } else {
-                    container.innerHTML = '<div class="loading">మీ బ్లాగ్‌లో ఇంకా పోస్ట్ లు లేవు. Nijam Nippu బ్లాగ్‌లో పోస్ట్ రాయండి!</div>';
+                    container.innerHTML = '<div class="loading">మీ బ్లాగ్‌లో ఇంకా పోస్ట్ లు లేవు. Nijam Nippu బ్లాగ్‌లో ఒక పోస్ట్ రాయండి!</div>';
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది. పేజీ రిఫ్రెష్ చేయండి.</div>';
-                console.error(error);
+                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది.</div>';
             }
         }
-
-        window.onload = () => {
-            fetchBloggerNews();
-            setInterval(fetchBloggerNews, 180000);
-        };
     </script>
+    <script src="https://nijamnippu.blogspot.com/feeds/posts/default?alt=json-in-script&callback=handleBloggerData"></script>
 </body>
 </html>
