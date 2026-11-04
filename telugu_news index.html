@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telugu News Swipe App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            max-height: 850px;
+            background-color: #1e1e1e;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        header {
+            background-color: #d32f2f;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header span {
+            font-size: 12px;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 8px;
+            border-radius: 10px;
+        }
+
+        .news-viewport {
+            flex: 1;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+        }
+
+        .news-viewport::-webkit-scrollbar {
+            display: none;
+        }
+
+        .news-card {
+            height: 100%;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            background-color: #1e1e1e;
+            position: relative;
+            padding: 20px;
+            justify-content: space-between;
+        }
+
+        .news-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            background-color: #2c2c2c;
+        }
+
+        .news-content-box {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 5px;
+        }
+
+        .news-content-box::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .news-content-box::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .news-category {
+            display: inline-block;
+            background-color: #d32f2f;
+            color: white;
+            padding: 3px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .news-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .news-description {
+            font-size: 14px;
+            color: #b0b0b0;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .read-more-btn {
+            display: block;
+            text-align: center;
+            background-color: #d32f2f;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+        }
+
+        .footer-nav {
+            padding: 8px;
+            text-align: center;
+            background-color: #181818;
+            font-size: 11px;
+            color: #777;
+            border-top: 1px solid #2c2c2c;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            తాజా వార్తలు 
+            <span id="updateStatus">Live 🔴</span>
+        </header>
+        
+        <div id="newsContainer" class="news-viewport">
+            <!-- App load avvagane instant ga default news chupistundi -->
+        </div>
+
+        <div class="footer-nav">
+            స్వైప్ అప్ / డౌన్ చేయండి • ప్రతి 5 నిమిషాలకు ఆటో-అప్‌డేట్
+        </div>
+    </div>
+
+    <script>
+        const initialNews = [
+            {
+                category: "రాజకీయం",
+                title: "తెలుగు రాష్ట్రాల్లో అభివృద్ధి కార్యక్రమాల జోరు",
+                description: "ప్రజా సంక్షేమం మరియు మౌలిక వసతుల కల్పనే లక్ష్యంగా ప్రభుత్వం కొత్త పథకాలను అమలు చేస్తోంది. ప్రజల నుండి సానుకూల స్పందన వస్తోంది.",
+                image: "https://picsum.photos/400/250?random=1",
+                link: "#"
+            },
+            {
+                category: "సినిమా",
+                title: "టాలీవుడ్ బాక్సాఫీస్ వద్ద కొత్త సినిమాల సందడి",
+                description: "రాబోయే వీకెండ్‌లో విడుదల కాబోతున్న చిత్రాలపై ప్రేక్షకులలో భారీ అంచనాలు నెలకొన్నాయి. అడ్వాన్స్ బుకింగ్స్ జోరుగా సాగుతున్నాయి.",
+                image: "https://picsum.photos/400/250?random=2",
+                link: "#"
+            },
+            {
+                category: "టెక్నాలజీ",
+                title: "టెక్ ప్రపంచంలో దూసుకుపోతున్న ఆర్టిఫీషియల్ ఇంటెలిజెన్స్",
+                description: "రోజురోజుకూ ఏఐ టెక్నాలజీ ప్రజల దైనందిన జీవితంలో భాగమైపోతోంది. ఆటోమేషన్ రంగంలో విప్లవాత్మక మార్పులు వస్తున్నాయి.",
+                image: "https://picsum.photos/400/250?random=3",
+                link: "#"
+            },
+            {
+                category: "క్రీడలు",
+                title: "క్రికెట్ ప్రేమికులను అలరిస్తున్న తాజా మ్యాచ్‌లు",
+                description: "రాబోయే టోర్నమెంట్స్ కోసం జట్లు తీవ్రంగా శ్రమిస్తున్నాయి. ప్లేయర్స్ ప్రాక్టీస్ సెషన్స్ రసవత్తరంగా సాగుతున్నాయి.",
+                image: "https://picsum.photos/400/250?random=4",
+                link: "#"
+            }
+        ];
+
+        function displayNews(newsList) {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = '';
+
+            newsList.forEach((news, index) => {
+                const card = document.createElement('div');
+                card.className = 'news-card';
+                card.innerHTML = `
+                    <div class="news-content-box">
+                        <img src="${news.image}" class="news-image" alt="Thumbnail">
+                        <span class="news-category">${news.category || 'తాజా అప్‌డేట్'}</span>
+                        <h2 class="news-title">${news.title}</h2>
+                        <p class="news-description">${news.description}</p>
+                    </div>
+                    <a href="${news.link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // First display default/instant news so it never gets stuck on loading
+        displayNews(initialNews);
+
+        // Try fetching live news in background every 5 minutes
+        async function fetchLiveNews() {
+            try {
+                const rssUrl = 'https://news.google.com/rss/search?q=Telugu+news&hl=te&gl=IN&ceid=IN:te';
+                const apiQuery = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
+                
+                const response = await fetch(apiQuery);
+                if (!response.ok) return;
+                
+                const strData = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(strData, "text/xml");
+                const items = xmlDoc.querySelectorAll("item");
+
+                if (items.length > 0) {
+                    let liveNewsList = [];
+                    items.forEach((item, index) => {
+                        const title = item.querySelector("title") ? item.querySelector("title").textContent : "శీర్షిక లేదు";
+                        let description = item.querySelector("description") ? item.querySelector("description").textContent : "వివరాలు లేవు";
+                        const link = item.querySelector("link") ? item.querySelector("link").textContent : "#";
+
+                        let cleanDesc = description.replace(/<[^>]*>?/gm, '');
+                        if(cleanDesc.length > 180) cleanDesc = cleanDesc.substring(0, 180) + '...';
+
+                        liveNewsList.push({
+                            category: "లైవ్ అప్‌డేట్",
+                            title: title,
+                            description: cleanDesc,
+                            image: `https://picsum.photos/400/250?random=${index + 10}`,
+                            link: link
+                        });
+                    });
+
+                    displayNews(liveNewsList);
+                    document.getElementById('updateStatus').innerText = "Live 🔴";
+                }
+            } catch (error) {
+                console.log("Background fetch failed, keeping default news.");
+            }
+        }
+
+        // Run live fetch after load and every 5 minutes (300000ms)
+        window.onload = () => {
+            fetchLiveNews();
+            setInterval(fetchLiveNews, 300000);
+        };
+    </script>
+</body>
+</html>
