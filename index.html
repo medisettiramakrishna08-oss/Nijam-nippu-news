@@ -34,7 +34,7 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి... <br><br> దయచేసి వేచి ఉండండి.</div>
+            <div class="loading">వార్తలు మరియు ఫోటోలు లోడ్ అవుతున్నాయి... <br><br> దయచేసి వేచి ఉండండి.</div>
         </div>
 
         <div class="footer-nav">
@@ -47,60 +47,81 @@
             const container = document.getElementById('newsContainer');
             
             try {
-                // Highly stable Samayam Telugu RSS & rss2json API
-                const rssUrl = 'https://telugu.samayam.com/rssfeeds/47065969.cms';
-                const apiQuery = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+                // Securely bypassing CORS using allorigins /get endpoint with News18 Telugu RSS
+                const rssUrl = 'https://telugu.news18.com/rss/top-news.xml';
+                const apiQuery = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
                 
                 const response = await fetch(apiQuery);
                 const data = await response.json();
 
-                if (data.status === 'ok' && data.items.length > 0) {
-                    container.innerHTML = ''; 
+                if (data.contents) {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                    const items = xmlDoc.querySelectorAll("item");
 
-                    data.items.forEach((item, index) => {
-                        // Extract original thumbnail
-                        let imageUrl = item.thumbnail || item.enclosure.link;
-                        
-                        if (!imageUrl && item.content) {
-                            const imgMatch = item.content.match(/<img[^>]+src="([^">]+)"/);
-                            if (imgMatch) imageUrl = imgMatch[1];
-                        }
-                        
-                        if (!imageUrl) {
-                            imageUrl = `https://picsum.photos/400/250?random=${index}`;
-                        }
+                    if (items.length > 0) {
+                        container.innerHTML = ''; 
 
-                        let cleanDesc = item.description.replace(/<[^>]*>?/gm, '').trim();
-                        if(cleanDesc.length > 180) cleanDesc = cleanDesc.substring(0, 180) + '...';
+                        items.forEach((item, index) => {
+                            const title = item.querySelector("title") ? item.querySelector("title").textContent : "శీర్షిక అందుబాటులో లేదు";
+                            const link = item.querySelector("link") ? item.querySelector("link").textContent : "#";
+                            let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
+                            
+                            // Extract exact thumbnail image
+                            let imageUrl = "";
+                            const enclosure = item.querySelector("enclosure");
+                            if (enclosure) {
+                                imageUrl = enclosure.getAttribute("url");
+                            }
+                            
+                            // Fallback image extraction from description
+                            if (!imageUrl) {
+                                const imgMatch = description.match(/src="([^">]+)"/);
+                                if (imgMatch) imageUrl = imgMatch[1];
+                            }
+                            
+                            // If still no image, use default
+                            if (!imageUrl) {
+                                imageUrl = `https://picsum.photos/400/250?random=${index}`;
+                            }
 
-                        const card = document.createElement('div');
-                        card.className = 'news-card';
-                        card.innerHTML = `
-                            <div class="news-content-box">
-                                <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://picsum.photos/400/250?random=${index}'">
-                                <span class="news-category">తాజా వార్త #${index + 1}</span>
-                                <h2 class="news-title">${item.title}</h2>
-                                <p class="news-description">${cleanDesc}</p>
-                            </div>
-                            <a href="${item.link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
-                        `;
-                        container.appendChild(card);
-                    });
+                            // Clean text
+                            let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
+                            if(cleanDesc.length > 180) cleanDesc = cleanDesc.substring(0, 180) + '...';
 
-                    let now = new Date();
-                    let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
-                    document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
+                            const card = document.createElement('div');
+                            card.className = 'news-card';
+                            card.innerHTML = `
+                                <div class="news-content-box">
+                                    <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://picsum.photos/400/250?random=${index}'">
+                                    <span class="news-category">తాజా వార్త #${index + 1}</span>
+                                    <h2 class="news-title">${title}</h2>
+                                    <p class="news-description">${cleanDesc}</p>
+                                </div>
+                                <a href="${link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
+                            `;
+                            container.appendChild(card);
+                        });
+
+                        // Update Time
+                        let now = new Date();
+                        let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
+                        document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
+                    } else {
+                        throw new Error("No XML items found");
+                    }
                 } else {
-                    throw new Error("No items found");
+                    throw new Error("Failed to fetch data");
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">నెట్‌వర్క్ కనెక్షన్ స్లోగా ఉంది లేదా లోడ్ అవ్వట్లేదు. దయచేసి పేజీ రిఫ్రెష్ చేయండి.</div>';
+                container.innerHTML = '<div class="loading">సర్వర్ కనెక్షన్ లోపం. దయచేసి కాసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.</div>';
+                console.error(error);
             }
         }
 
         window.onload = () => {
             fetchLiveNews();
-            setInterval(fetchLiveNews, 600000); // 10 minutes auto-update
+            setInterval(fetchLiveNews, 600000); // 10 mins auto update
         };
     </script>
 </body>
