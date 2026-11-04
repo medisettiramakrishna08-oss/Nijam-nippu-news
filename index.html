@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telugu News Swipe App - Live</title>
+    <title>Telugu News - Fast Live</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
@@ -22,7 +22,7 @@
         .news-description { font-size: 14px; color: #b0b0b0; line-height: 1.5; margin-bottom: 10px; }
         .read-more-btn { display: block; text-align: center; background-color: #d32f2f; color: white; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3); }
         .footer-nav { padding: 8px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
-        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #888; text-align: center; padding: 20px; line-height: 1.6; }
+        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #888; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
@@ -34,7 +34,7 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">వార్తలు మరియు ఫోటోలు లోడ్ అవుతున్నాయి... <br><br> దయచేసి వేచి ఉండండి.</div>
+            <div class="loading">సూపర్ ఫాస్ట్ వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
         </div>
 
         <div class="footer-nav">
@@ -47,8 +47,8 @@
             const container = document.getElementById('newsContainer');
             
             try {
-                // News18 బ్లాక్ చేస్తోంది కాబట్టి, ఎప్పుడూ రన్ అయ్యే Samayam Telugu API వాడుతున్నాం 
-                const rssUrl = 'https://telugu.samayam.com/rssfeeds/47065969.cms';
+                // Google News Telugu - Extremely Fast & Never Blocks
+                const rssUrl = 'https://news.google.com/rss?hl=te&gl=IN&ceid=IN:te';
                 const apiQuery = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
                 
                 const response = await fetch(apiQuery);
@@ -58,28 +58,30 @@
                     container.innerHTML = ''; 
 
                     data.items.forEach((item, index) => {
-                        // ఇంటర్నెట్ నుండి ఒరిజినల్ ఫోటోలు లాగడం
-                        let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link);
-                        
-                        if (!imageUrl && item.description) {
-                            const imgMatch = item.description.match(/<img[^>]+src="([^">]+)"/);
-                            if (imgMatch) imageUrl = imgMatch[1];
-                        }
-                        if (!imageUrl) {
+                        // గూగుల్ న్యూస్ లోపల దాగి ఉన్న ఒరిజినల్ థంబ్‌నైల్ ఫోటోను బయటకు తీయడం
+                        let imageUrl = '';
+                        const imgMatch = item.description.match(/<img[^>]+src="([^">]+)"/);
+                        if (imgMatch && imgMatch[1]) {
+                            imageUrl = imgMatch[1];
+                        } else {
                             imageUrl = `https://picsum.photos/400/250?random=${index}`;
                         }
 
-                        // టెక్స్ట్ ని నీట్ గా క్లీన్ చేయడం
+                        // టెక్స్ట్ లోపల ఉన్న అనవసరమైన కోడ్ ని క్లీన్ చేయడం
                         let cleanDesc = item.description.replace(/<[^>]*>?/gm, '').trim();
-                        if(cleanDesc.length > 180) cleanDesc = cleanDesc.substring(0, 180) + '...';
+                        if(cleanDesc.length > 150) cleanDesc = cleanDesc.substring(0, 150) + '...';
+
+                        // న్యూస్ ఎక్కడ నుండి వచ్చిందో (Eenadu, Sakshi etc..) చూపించడానికి
+                        let sourceName = item.title.split(' - ').pop();
+                        let cleanTitle = item.title.replace(' - ' + sourceName, '');
 
                         const card = document.createElement('div');
                         card.className = 'news-card';
                         card.innerHTML = `
                             <div class="news-content-box">
                                 <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://picsum.photos/400/250?random=${index}'">
-                                <span class="news-category">తాజా వార్త</span>
-                                <h2 class="news-title">${item.title}</h2>
+                                <span class="news-category">${sourceName || 'తాజా వార్త'}</span>
+                                <h2 class="news-title">${cleanTitle}</h2>
                                 <p class="news-description">${cleanDesc}</p>
                             </div>
                             <a href="${item.link}" target="_blank" class="read-more-btn">పూర్తి వార్త చదవండి →</a>
@@ -92,20 +94,19 @@
                     let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
                     document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
                 } else {
-                    throw new Error(data.message || "కొత్త వార్తలు దొరకలేదు");
+                    throw new Error("వార్తలు లోడ్ అవ్వలేదు");
                 }
             } catch (error) {
-                container.innerHTML = `<div class="loading" style="color: #ff5252;">
-                    <b>సిస్టమ్ ఎర్రర్:</b><br>
-                    ${error.message}<br><br>
-                    నెట్‌వర్క్ ప్రాబ్లం. పేజీని ఒకసారి రిఫ్రెష్ చేయండి. బ్రౌజర్ లో యాడ్-బ్లాకర్ ఉంటే ఆఫ్ చేయండి.
-                </div>`;
+                container.innerHTML = '<div class="loading">కనెక్షన్ ఎర్రర్. దయచేసి రిఫ్రెష్ చేయండి.</div>';
             }
         }
 
+        // యాప్ ఓపెన్ అవ్వగానే ఫాస్ట్ గా లోడ్ అవుతుంది
         window.onload = () => {
             fetchLiveNews();
-            setInterval(fetchLiveNews, 600000); // ప్రతి 10 నిమిషాలకు ఆటో-అప్‌డేట్ అవుతుంది
+            
+            // ప్రతి 10 నిమిషాలకు ఆటో-అప్‌డేట్ (600000 మిల్లీసెకన్లు)
+            setInterval(fetchLiveNews, 600000);
         };
     </script>
 </body>
