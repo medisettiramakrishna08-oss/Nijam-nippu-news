@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telugu News Swipe App</title>
+    <title>Nijam Nippu - Telugu News App</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
@@ -21,18 +21,19 @@
         .news-title { font-size: 20px; font-weight: bold; color: #ffffff; margin-bottom: 15px; line-height: 1.4; }
         .news-description { font-size: 16px; color: #cccccc; line-height: 1.6; text-align: justify; }
         .footer-nav { padding: 10px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
+        .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #888; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
         <header>
-            తాజా వార్తలు 
+            నిజం నిప్పు 
             <span id="updateStatus">Live 🔴</span>
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <!-- వార్తలు ఇక్కడ వస్తాయి -->
+            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
         </div>
 
         <div class="footer-nav">
@@ -41,51 +42,71 @@
     </div>
 
     <script>
-        // 1. ఇక్కడ మీరు వార్తలను మాన్యువల్ గా సొంతంగా రాసుకోవచ్చు
-        const myNewsData = [
-            {
-                category: "రాజకీయం",
-                title: "మీ మొదటి వార్త హెడ్డింగ్ ఇక్కడ రాయండి",
-                description: "ఇది మీ వార్త యొక్క పూర్తి వివరాలు. Way2News లాగా ఇక్కడ మీరు ఎంత పెద్ద మేటర్ అయినా రాసుకోవచ్చు. నెట్‌వర్క్ ఎర్రర్స్ రావు, లోడింగ్ ప్రాబ్లమ్ అస్సలు ఉండదు. అంతా మీ చేతుల్లోనే ఉంటుంది.",
-                image: "https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80"
-            },
-            {
-                category: "సినిమా",
-                title: "టాలీవుడ్ లో కొత్త సినిమాల సందడి",
-                description: "ఇక్కడ మీరు సినిమా వార్తలు రాసుకోవచ్చు. పైన ఉన్న ఇమేజ్ లింక్ ని మార్చితే, మీకు కావాల్సిన ఫోటో ఇక్కడ డిస్ప్లే అవుతుంది. ఎన్ని వార్తలు కావాలంటే అన్ని కింద యాడ్ చేసుకుంటూ వెళ్లొచ్చు.",
-                image: "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=400&q=80"
-            },
-            {
-                category: "టెక్నాలజీ",
-                title: "సరికొత్త ఫీచర్లతో వచ్చిన మొబైల్",
-                description: "ఈ విధంగా మీరు మీకు నచ్చిన కేటగిరీ పెట్టుకుని, మీ సొంత వార్తలను ప్రజలకు అందించవచ్చు. ఇది GitHub లో పెడితే సెకనులో ఫాస్ట్ గా ఓపెన్ అవుతుంది.",
-                image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80"
-            }
-        ];
+        // మీ బ్లాగ్ లింక్ ఇక్కడ పర్ఫెక్ట్ గా సెట్ చేయబడింది
+        const bloggerURL = 'https://nijamnippu.blogspot.com/feeds/posts/default?alt=json';
 
-        // 2. మీ వార్తలను యాప్ లో చూపించే ఫంక్షన్
-        function loadManualNews() {
+        async function fetchBloggerNews() {
             const container = document.getElementById('newsContainer');
-            container.innerHTML = ''; 
+            
+            try {
+                const liveUrl = bloggerURL + '&timestamp=' + new Date().getTime();
+                const response = await fetch(liveUrl);
+                const data = await response.json();
 
-            myNewsData.forEach((news) => {
-                const card = document.createElement('div');
-                card.className = 'news-card';
-                
-                card.innerHTML = `
-                    <div class="news-content-box">
-                        <img src="${news.image}" class="news-image" alt="Thumbnail">
-                        <span class="news-category">${news.category}</span>
-                        <h2 class="news-title">${news.title}</h2>
-                        <p class="news-description">${news.description}</p>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
+                if (data.feed && data.feed.entry && data.feed.entry.length > 0) {
+                    container.innerHTML = ''; 
+
+                    data.feed.entry.forEach((entry) => {
+                        const title = entry.title.$t;
+                        let htmlContent = entry.content ? entry.content.$t : "";
+                        
+                        // ఇమేజ్ ఆటోమేటిక్‌గా ఎక్స్‌ట్రాక్ట్ చేయడం
+                        let imageUrl = "https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80";
+                        if (entry.media$thumbnail && entry.media$thumbnail.url) {
+                            imageUrl = entry.media$thumbnail.url.replace(/\/s[0-9]+(\-c)?\//, '/s800/');
+                        } else {
+                            const imgMatch = htmlContent.match(/src="([^">]+)"/);
+                            if (imgMatch) imageUrl = imgMatch[1];
+                        }
+
+                        // టెక్స్ట్ నీట్‌గా క్లీన్ చేయడం
+                        let cleanDesc = htmlContent.replace(/<[^>]*>?/gm, '').trim();
+
+                        // బ్లాగర్ లేబుల్ ని కేటగిరీగా వాడటం
+                        let category = "ముఖ్య వార్త";
+                        if (entry.category && entry.category.length > 0) {
+                            category = entry.category[0].term;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = 'news-card';
+                        
+                        card.innerHTML = `
+                            <div class="news-content-box">
+                                <img src="${imageUrl}" class="news-image" alt="Thumbnail">
+                                <span class="news-category">${category}</span>
+                                <h2 class="news-title">${title}</h2>
+                                <p class="news-description">${cleanDesc}</p>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+
+                    let now = new Date();
+                    let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
+                    document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
+                } else {
+                    container.innerHTML = '<div class="loading">ప్రస్తుతం మీ బ్లాగ్‌లో వార్తలు లేవు. ఒక పోస్ట్ రాయండి!</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది.</div>';
+            }
         }
 
-        // యాప్ ఓపెన్ అవ్వగానే మీ వార్తలు ఫాస్ట్ గా లోడ్ అవుతాయి
-        window.onload = loadManualNews;
+        window.onload = () => {
+            fetchBloggerNews();
+            setInterval(fetchBloggerNews, 180000); // ప్రతి 3 నిమిషాలకు ఆటో-సింక్ అవుతుంది
+        };
     </script>
 </body>
 </html>
