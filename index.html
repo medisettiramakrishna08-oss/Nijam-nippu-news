@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nijam Nippu - Telugu News App</title>
+    
+    <!-- PWABuilder కోసం Manifest కోడ్ -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
+      %22name%22: %22Nijam Nippu%22,
+      %22short_name%22: %22NijamNippu%22,
+      %22start_url%22: %22./%22,
+      %22display%22: %22standalone%22,
+      %22background_color%22: %22%23121212%22,
+      %22theme_color%22: %22%23d32f2f%22,
+      %22icons%22: [
+        {
+          %22src%22: %22https://via.placeholder.com/512%22,
+          %22sizes%22: %22512x512%22,
+          %22type%22: %22image/png%22
+        }
+      ]
+    }">
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
@@ -61,10 +79,9 @@
                             if (imgMatch) imageUrl = imgMatch[1];
                         }
 
-                        // టెక్స్ట్ క్లీన్ చేయడం
                         let cleanDesc = htmlContent.replace(/<[^>]*>?/gm, '').trim();
 
-                        // WAY2NEWS లాగా కేవలం షార్ట్ సారాంశం (250 అక్షరాలు మాత్రమే) ఉండేలా కట్ చేయడం
+                        // Way2News లాగా కేవలం షార్ట్ సారాంశం (250 అక్షరాలు మాత్రమే)
                         if (cleanDesc.length > 250) {
                             cleanDesc = cleanDesc.substring(0, 250) + '... ఇంకా చదవండి';
                         }
