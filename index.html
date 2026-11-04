@@ -24,11 +24,6 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        
-        /* Exact Image Splash Screen for Mobile Screen */
-        #splashScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; transition: opacity 0.5s ease; background: #050b14; display: flex; justify-content: center; align-items: center; }
-        .splash-image { width: 100%; height: 100%; object-fit: cover; }
-
         .app-container { width: 100%; max-width: 420px; height: 100%; max-height: 850px; background-color: #1e1e1e; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         header { background-color: #d32f2f; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; }
         header span { font-size: 12px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 10px; }
@@ -48,11 +43,6 @@
 </head>
 <body>
 
-    <!-- App Opening Splash Screen with Exact Uploaded Image Reference -->
-    <div id="splashScreen">
-        <img src="https://i.ibb.co/3s8R62v/nijamnippu-logo.png" class="splash-image" alt="Nijam Nippu Splash Screen">
-    </div>
-
     <div class="app-container">
         <header>
             నిజం నిప్పు 
@@ -69,14 +59,6 @@
     </div>
 
     <script>
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const splash = document.getElementById('splashScreen');
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 500);
-            }, 2000);
-        });
-
         function handleBloggerData(data) {
             const container = document.getElementById('newsContainer');
             
