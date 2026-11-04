@@ -13,13 +13,13 @@
         .news-viewport { flex: 1; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .news-viewport::-webkit-scrollbar { display: none; }
         .news-card { height: 100%; scroll-snap-align: start; display: flex; flex-direction: column; background-color: #1e1e1e; position: relative; padding: 20px; justify-content: flex-start; }
-        .news-image { width: 100%; height: 220px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; background-color: #2c2c2c; }
+        .news-image { width: 100%; height: 230px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; background-color: #2c2c2c; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .news-content-box { overflow-y: auto; flex: 1; padding-right: 5px; display: flex; flex-direction: column; }
         .news-content-box::-webkit-scrollbar { width: 4px; }
         .news-content-box::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        .news-category { align-self: flex-start; background-color: #d32f2f; color: white; padding: 3px 8px; font-size: 11px; border-radius: 4px; margin-bottom: 12px; }
-        .news-title { font-size: 19px; font-weight: bold; color: #ffffff; margin-bottom: 12px; line-height: 1.4; }
-        .news-description { font-size: 15px; color: #b0b0b0; line-height: 1.6; text-align: justify; }
+        .news-category { align-self: flex-start; background-color: #d32f2f; color: white; padding: 4px 10px; font-size: 12px; border-radius: 4px; margin-bottom: 12px; font-weight: bold; }
+        .news-title { font-size: 20px; font-weight: bold; color: #ffffff; margin-bottom: 15px; line-height: 1.4; }
+        .news-description { font-size: 16px; color: #cccccc; line-height: 1.6; text-align: justify; }
         .footer-nav { padding: 10px; text-align: center; background-color: #181818; font-size: 11px; color: #777; border-top: 1px solid #2c2c2c; }
         .loading { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; font-size: 15px; color: #888; text-align: center; padding: 20px; }
     </style>
@@ -33,11 +33,11 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
+            <div class="loading">లైవ్ వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
         </div>
 
         <div class="footer-nav">
-            స్వైప్ అప్ / డౌన్ చేయండి • ప్రతి 10 నిమిషాలకు ఆటో-అప్‌డేట్
+            పైకి/కిందకి స్వైప్ చేయండి • ప్రతి 10 నిమిషాలకు ఆటో-అప్‌డేట్
         </div>
     </div>
 
@@ -46,79 +46,81 @@
             const container = document.getElementById('newsContainer');
             
             try {
-                // OneIndia Telugu feed gives detailed descriptions and perfect images
+                // 100% Free RSS Feed (OneIndia Telugu) + Free AllOrigins Proxy
                 const rssUrl = 'https://telugu.oneindia.com/rss/telugu-news-fb.xml';
-                const apiQuery = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+                const apiQuery = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
                 
                 const response = await fetch(apiQuery);
-                const data = await response.json();
+                const xmlText = await response.text();
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const items = xmlDoc.querySelectorAll("item");
 
-                if (data.contents) {
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-                    const items = xmlDoc.querySelectorAll("item");
+                if(items.length > 0) {
+                    container.innerHTML = ''; 
 
-                    if(items.length > 0) {
-                        container.innerHTML = ''; 
+                    items.forEach((item, index) => {
+                        const title = item.querySelector("title") ? item.querySelector("title").textContent : "శీర్షిక లేదు";
+                        let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
+                        
+                        // ఇమేజ్ ఎక్స్‌ట్రాక్షన్
+                        let imageUrl = "";
+                        const enclosure = item.querySelector("enclosure");
+                        if (enclosure) imageUrl = enclosure.getAttribute("url");
 
-                        items.forEach((item, index) => {
-                            const title = item.querySelector("title") ? item.querySelector("title").textContent : "";
-                            let description = item.querySelector("description") ? item.querySelector("description").textContent : "";
-                            
-                            // Image extract cheyadam
-                            let imageUrl = "";
-                            const enclosure = item.querySelector("enclosure");
-                            if (enclosure) imageUrl = enclosure.getAttribute("url");
+                        if (!imageUrl && description.includes("<img")) {
+                            const imgMatch = description.match(/src="([^">]+)"/);
+                            if (imgMatch) imageUrl = imgMatch[1];
+                        }
+                        
+                        if (!imageUrl) {
+                            imageUrl = `https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80`;
+                        }
 
-                            // Description lo unna image ni extract cheyadam
-                            if (!imageUrl && description.includes("<img")) {
-                                const imgMatch = description.match(/src="([^">]+)"/);
-                                if (imgMatch) imageUrl = imgMatch[1];
-                            }
-                            
-                            // Em photo lekapothe default news image
-                            if (!imageUrl) {
-                                imageUrl = `https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80`;
-                            }
+                        // Way2News లాగా కేవలం టెక్స్ట్ మాత్రమే ఉండేలా క్లీన్ చేయడం
+                        let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
+                        
+                        // చదవడానికి అనువుగా వార్త సారాంశం (500 అక్షరాలు)
+                        if(cleanDesc.length > 500) {
+                            cleanDesc = cleanDesc.substring(0, 500) + '...';
+                        }
 
-                            // Description ni clean chesi peddaga chupinchadam (way2news laga)
-                            let cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
-                            
-                            // Chala chinnaga unna descriptions ni ignore cheyadam
-                            if(cleanDesc.length < 30) return;
+                        // కంటెంట్ లేని వార్తలను స్కిప్ చేయడం
+                        if(cleanDesc.length < 50) return;
 
-                            // Description limit cheyadam (Way2News format)
-                            if(cleanDesc.length > 500) cleanDesc = cleanDesc.substring(0, 500) + '...';
+                        const card = document.createElement('div');
+                        card.className = 'news-card';
+                        
+                        // 'పూర్తి వార్త చదవండి' బటన్ తీసేశాను, డైరెక్ట్ వార్త మాత్రమే ఉంటుంది
+                        card.innerHTML = `
+                            <div class="news-content-box">
+                                <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://images.unsplash.com/photo-1546422904-90eab23c3d7e?auto=format&fit=crop&w=400&q=80'">
+                                <span class="news-category">ముఖ్య వార్త</span>
+                                <h2 class="news-title">${title}</h2>
+                                <p class="news-description">${cleanDesc}</p>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
 
-                            const card = document.createElement('div');
-                            card.className = 'news-card';
-                            // Button theesesanu, direct ga description untundi
-                            card.innerHTML = `
-                                <div class="news-content-box">
-                                    <img src="${imageUrl}" class="news-image" alt="Thumbnail" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=80'">
-                                    <span class="news-category">తాజా వార్త</span>
-                                    <h2 class="news-title">${title}</h2>
-                                    <p class="news-description">${cleanDesc}</p>
-                                </div>
-                            `;
-                            container.appendChild(card);
-                        });
-
-                        // Time update
-                        let now = new Date();
-                        let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
-                        document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
-                    }
+                    // టైమ్ అప్‌డేట్
+                    let now = new Date();
+                    let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
+                    document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
+                } else {
+                    throw new Error("వార్తలు రాలేదు");
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">నెట్‌వర్క్ ప్రాబ్లం. పేజీని రిఫ్రెష్ చేయండి.</div>';
+                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది. దయచేసి రిఫ్రెష్ చేయండి.</div>';
             }
         }
 
-        // Page load avvagane news vastundi
+        // యాప్ ఓపెన్ అవ్వగానే లోడ్ అవుతుంది
         window.onload = () => {
             fetchLiveNews();
-            setInterval(fetchLiveNews, 600000);
+            // ప్రతి 10 నిమిషాలకు ఫ్రీగా ఆటోమేటిక్ అప్డేట్ అవుతుంది
+            setInterval(fetchLiveNews, 600000); 
         };
     </script>
 </body>
