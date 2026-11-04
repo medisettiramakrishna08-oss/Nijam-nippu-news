@@ -33,7 +33,7 @@
         </header>
         
         <div id="newsContainer" class="news-viewport">
-            <div class="loading">మీ బ్లాగర్ నుండి వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
+            <div class="loading">వార్తలు లోడ్ అవుతున్నాయి... ⚡</div>
         </div>
 
         <div class="footer-nav">
@@ -48,9 +48,15 @@
             const container = document.getElementById('newsContainer');
             
             try {
-                const liveUrl = bloggerURL + '&timestamp=' + new Date().getTime();
-                const response = await fetch(liveUrl);
-                const data = await response.json();
+                // CORS బైపాస్ కోసం ప్రాక్సీని ఉపయోగిస్తున్నాం
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(bloggerURL + '&timestamp=' + new Date().getTime())}`;
+                
+                const response = await fetch(proxyUrl);
+                const resData = await response.json();
+                
+                if (!resData.contents) throw new Error("Empty response");
+
+                const data = JSON.parse(resData.contents);
 
                 if (data.feed && data.feed.entry && data.feed.entry.length > 0) {
                     container.innerHTML = ''; 
@@ -92,10 +98,11 @@
                     let mins = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
                     document.getElementById('updateStatus').innerText = "Updated: " + now.getHours() + ":" + mins;
                 } else {
-                    container.innerHTML = '<div class="loading">మీ బ్లాగ్‌లో ఇంకా పోస్ట్ లు లేవు. దయచేసి Nijam Nippu బ్లాగ్‌లో ఒక కొత్త పోస్ట్ రాయండి!</div>';
+                    container.innerHTML = '<div class="loading">మీ బ్లాగ్‌లో ఇంకా పోస్ట్ లు లేవు. Nijam Nippu బ్లాగ్‌లో పోస్ట్ రాయండి!</div>';
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది.</div>';
+                container.innerHTML = '<div class="loading">వార్తలు లోడ్ అవ్వడంలో సమస్య ఉంది. పేజీ రిఫ్రెష్ చేయండి.</div>';
+                console.error(error);
             }
         }
 
